@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Maximiliano Bregante</Authors>
+    <Description>A simple tool for automatic DB setup and maintenance.</Description>
+    <Copyright>Maximiliano Bregante</Copyright>
+    <PackageLicenseExpression />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\DB.SystemVersioningSetUp.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\DB.SystemVersioningSetUp.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiffPlex" Version="1.7.0" />
+    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="161.46437.65" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\DB.SystemVersioningSetUp.sql" />
+  </ItemGroup>
+
+</Project>
