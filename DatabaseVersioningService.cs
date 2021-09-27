@@ -72,13 +72,32 @@ namespace DbMigrationTool
             };
         }
 
+        public OperationResult UpdateDatabase()
+        {
+            LoadStatus();
+            OperationResult rslt = ExecuteSchemaUpdates();
+            if (rslt.Success)
+            {
+                rslt = ExecuteDataUpdates();
+            }
+
+            return rslt;
+        }
+
         public OperationResult ExecuteSchemaUpdates()
         {
             OperationResult rslt = m_statusController.ExecuteSchemaUpdates();
             CheckVersioningStatus();
             return rslt;
         }
-        
+
+        public OperationResult ExecuteDataUpdates()
+        {
+            OperationResult rslt = m_statusController.ExecuteDataScripts();
+            CheckVersioningStatus();
+            return rslt;
+        }
+
         public OperationResult ExecuteScript(DatabaseVersioningScriptExec scriptExecRequest)
         {
             OperationResult rslt = m_statusController.ExecuteScript(scriptExecRequest);

@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
-
 
 namespace DbMigrationTool
 {
@@ -12,7 +12,7 @@ namespace DbMigrationTool
             get; set;
         }
 
-        public static DbEnvironmentEnum Environment
+        public static List<string> ScriptsTags
         {
             get; set;
         }
@@ -66,25 +66,15 @@ namespace DbMigrationTool
             }
         }
 
-        public static void Init()
+        public static void Init(string connectionString, List<string> scriptsTags, Assembly resourcesAssembly)
         {
-            string connectionString = System.Environment.GetEnvironmentVariable("LOCAL_CONNECTION_STRING");
-            string dbDeployEnv = System.Environment.GetEnvironmentVariable("DB_DEPLOY_ENV");
-            object dbEnv = null;
-            if (Enum.TryParse(enumType: typeof(DbEnvironmentEnum), value: dbDeployEnv, out dbEnv))
-            {
-                DbMigrationToolConfig.Environment = (DbEnvironmentEnum)dbEnv;
-            }
-            else
-            {
-                DbMigrationToolConfig.Environment = DbEnvironmentEnum.Default;
-            }
-
+            DbMigrationToolConfig.ScriptsTags = new List<string>(scriptsTags);
+            
             DbConnectionString dbcs = new DbConnectionString(connectionString);
             DbMigrationToolConfig.ConnectionString = dbcs;
 
-            DbMigrationToolConfig.ResourcesAssembly = Assembly.GetExecutingAssembly();
-            DbMigrationToolConfig.ResourcesNamespace = Assembly.GetExecutingAssembly().GetName().Name;
+            DbMigrationToolConfig.ResourcesAssembly = resourcesAssembly; // Assembly.GetEntryAssembly();
+            DbMigrationToolConfig.ResourcesNamespace = resourcesAssembly.GetName().Name;
         }
     }
 }

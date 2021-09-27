@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DbMigrationTool
 {
@@ -47,6 +48,38 @@ namespace DbMigrationTool
         internal OperationResult ExecuteScript(Script script, bool executeAsReader = false)
         {
             return m_manager.ExecuteScript(script, executeAsReader);
+        }
+
+        /// <summary>
+        /// Creates or updates the database.
+        /// </summary>
+        /// <returns></returns>
+        public static List<SystemVersioningLog> AutoSetup()
+        {
+            Logger.AddMessage("AutoSetup:: Started.");
+            string dbName = DbMigrationToolConfig.ConnectionString.Database;
+            DatabaseSetupService dss = new DbMigrationTool.DatabaseSetupService();
+           
+            OperationResult rslt;
+
+            if (dss.CanCreateDatabase(databaseName: dbName))
+            {
+                Logger.AddMessage("AutoSetup:: Database does not exists, creating...");
+                rslt = dss.CreateDatabase(databaseName: dbName, dataPackageScriptPath: "C:\\temp");
+            }
+            else
+            {
+                Logger.AddMessage("AutoSetup:: Database already exists, updating if needed...");
+                DatabaseVersioningService _dvs = new DatabaseVersioningService();
+                rslt = _dvs.UpdateDatabase();
+            }
+
+            if (rslt.Success == false)
+            {
+                throw new Exception(rslt.Info);
+            }
+
+            return Logger.GetLogs();
         }
     }
 }

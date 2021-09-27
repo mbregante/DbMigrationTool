@@ -21,11 +21,6 @@
             private set;
         }
 
-        public static DbEnvironmentEnum Environment
-        {
-            get { return DbMigrationToolConfig.Environment; }
-        }
-        
         public static ApplicationDatabaseStatusInfo Instance
         {
             get

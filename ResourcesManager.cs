@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,13 +12,13 @@ namespace DbMigrationTool
             List<string> resourcesName = DbMigrationToolConfig.ResourcesAssembly.GetManifestResourceNames().ToList();
 
             List<string> allSchemaScripts = resourcesName.Where(x => DbMigrationToolConfig.SchemaResourceRegex.IsMatch(x)).ToList();
-            SchemaScripts = FilterByEnvironment(allSchemaScripts, includeCommon: true);
+            SchemaScripts = FilterByEnvironment(allSchemaScripts);
 
             List<string> allDataScripts = resourcesName.Where(x => DbMigrationToolConfig.DataResourceRegex.IsMatch(x)).ToList();
-            DataScripts = FilterByEnvironment(allDataScripts, includeCommon: false);
+            DataScripts = FilterByEnvironment(allDataScripts);
 
             List<string> allIntegrityScripts = resourcesName.Where(x => DbMigrationToolConfig.IntegrityResourceRegex.IsMatch(x)).ToList();
-            IntegrityScripts = FilterByEnvironment(allIntegrityScripts, includeCommon: false);
+            IntegrityScripts = FilterByEnvironment(allIntegrityScripts);
 
             SchemaScripts.Sort();
             DataScripts.Sort();
@@ -53,6 +52,7 @@ namespace DbMigrationTool
             return Assembly.GetExecutingAssembly().GetManifestResourceStream("DbMigrationTool.Resources." + name);
         }
 
+        /*
         internal static List<string> GetOtherEnvironmentsTag(string thisEnvironment)
         {
             List<string> otherEnvsTags = new List<string>();
@@ -82,45 +82,25 @@ namespace DbMigrationTool
             }
 
             return otherEnvsTags;
-        }
+        }*/
 
-        internal static List<string> FilterByEnvironment(List<string> scriptNames, bool includeCommon = false)
+        internal static List<string> FilterByEnvironment(List<string> scriptNames)
         {
-            string environmentName = DbMigrationToolConfig.Environment.ToString();
+            
             List<string> filteredList = new List<string>();
-            string thisKeyTag = string.Format(".{0}.", environmentName);
-            string defaultKeyTag = string.Format(".{0}.", DbEnvironmentEnum.Default);
-            List<string> otherKeysTag = GetOtherEnvironmentsTag(environmentName);
+            string keyTagTemplate = ".{0}.";
 
             List<string> defaultScripts = new List<string>();
             foreach (string scriptName in scriptNames)
             {
-                if (DbMigrationToolConfig.Environment == DbEnvironmentEnum.Default)
+                foreach(string tag in DbMigrationToolConfig.ScriptsTags)
                 {
-                    // if not a specific environment, only take scripts that AREN'T environment specific.
-
-                    if ( !otherKeysTag.Any( o => scriptName.Contains(o)))
+                    string keyTag = string.Format(keyTagTemplate, tag);
+                    if (scriptName.ToLower().Contains(keyTag))
                     {
                         filteredList.Add(scriptName);
                     }
                 }
-                else
-                {
-                    if (includeCommon && scriptName.Contains(defaultKeyTag))
-                    {
-                        defaultScripts.Add(scriptName);
-                    }
-
-                    if (scriptName.Contains(thisKeyTag))
-                    {
-                        filteredList.Add(scriptName);
-                    }
-                }
-            }
-
-            if (filteredList.Count == 0)
-            {
-                filteredList.AddRange(defaultScripts);
             }
 
             return filteredList;

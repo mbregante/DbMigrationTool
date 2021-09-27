@@ -30,7 +30,7 @@ namespace DbMigrationTool
         public List<Script> SchemaScripts { get; private set; }
         public List<Script> DataScripts { get; private set; }
         public List<Script> IntegrityScripts { get; private set; }
-        public List<ScriptLog> ScriptsLog { get { return ScriptErrorLogger.ScriptsLog; } }
+        public List<ScriptLog> ScriptsLog { get { return Logger.ScriptsLog; } }
 
         internal DBStatusController()
         {
@@ -102,14 +102,14 @@ namespace DbMigrationTool
 
                         if (sqlLines.Count == 0)
                         {
-                            ScriptErrorLogger.Log(script, LogScriptMessageEnum.MissingDataHeader);
+                            Logger.Log(script, LogScriptMessageEnum.MissingDataHeader);
                         }
                         else if (loadCustomFields)
                         {
                             ReadScriptFields(sqlLines, script);
                         }
 
-                        if (!ScriptErrorLogger.HasErrors(script.FileName))
+                        if (!Logger.HasErrors(script.FileName))
                         {
                             m_allScripts.Add(script);
                             script.SqlCode = string.Join(Environment.NewLine, sqlLines);
@@ -208,7 +208,7 @@ namespace DbMigrationTool
 
             if (sqlLines.Any(x => x.Trim().StartsWith("USE")))
             {
-                ScriptErrorLogger.Log(script, LogScriptMessageEnum.DBDeclaration);
+                Logger.Log(script, LogScriptMessageEnum.DBDeclaration);
             }
         }
 
@@ -264,12 +264,12 @@ namespace DbMigrationTool
                 }
                 else
                 {
-                    ScriptErrorLogger.Log(script, LogScriptMessageEnum.DateValueInvalid);
+                    Logger.Log(script, LogScriptMessageEnum.DateValueInvalid);
                 }
             }
             else
             {
-                ScriptErrorLogger.Log(script, LogScriptMessageEnum.DateMissing);
+                Logger.Log(script, LogScriptMessageEnum.DateMissing);
             }
         }
 
@@ -289,12 +289,12 @@ namespace DbMigrationTool
                 }
                 else
                 {
-                    ScriptErrorLogger.Log(script, LogScriptMessageEnum.VersionValueInvalid);
+                    Logger.Log(script, LogScriptMessageEnum.VersionValueInvalid);
                 }
             }
             else
             {
-                ScriptErrorLogger.Log(script, LogScriptMessageEnum.VersionMissing);
+                Logger.Log(script, LogScriptMessageEnum.VersionMissing);
             }
         }
 
@@ -312,12 +312,12 @@ namespace DbMigrationTool
                 }
                 else
                 {
-                    ScriptErrorLogger.Log(script, LogScriptMessageEnum.NameValueInvalid);
+                    Logger.Log(script, LogScriptMessageEnum.NameValueInvalid);
                 }
             }
             else
             {
-                ScriptErrorLogger.Log(script, LogScriptMessageEnum.NameMissing);
+                Logger.Log(script, LogScriptMessageEnum.NameMissing);
             }
         }
 

@@ -296,8 +296,8 @@ namespace DbMigrationTool
                     int rslt = server.ConnectionContext.ExecuteNonQuery(script.SqlCode);
                     results.Add("ExecuteNonQuery int result: " + rslt);
 
-                    string message = string.Format("Versioning Script '{0}' has been executed. See 'Details' column for script code.", script.FileName);
-                    ScriptErrorLogger.AddMessage(message: message);
+                    string message = string.Format("Versioning Script '{0}' has been executed.",  string.IsNullOrEmpty(script.FileName) ? script.Name : script.FileName);
+                    Logger.AddMessage(message: message);
                     Debug.WriteLine(message);
                     server.ConnectionContext.CommitTransaction();
                 }
@@ -399,11 +399,11 @@ namespace DbMigrationTool
             /* FIXME: ON TESTING ENVIRONMENT, IF A DATABASE ALREADY EXISTS, DROP IT */
             /************************************************************************/
 
-            ScriptErrorLogger.AddMessage(message: string.Format("Starting database bootstrapping process for database '{0}'.", databaseName));
+            Logger.AddMessage(message: string.Format("Starting database bootstrapping process for database '{0}'.", databaseName));
             Version appVersion = DbMigrationToolConfig.ResourcesAssembly.GetName().Version;
             string appVersionPropertyName = "AppVersion";
             string newDatabaseName = databaseName + "_" + appVersion;
-            ScriptErrorLogger.AddMessage(message: string.Format("Creating database '{0}', final name will be '{1}'", newDatabaseName, databaseName));
+            Logger.AddMessage(message: string.Format("Creating database '{0}', final name will be '{1}'", newDatabaseName, databaseName));
 
             using (SqlConnection connection = new SqlConnection(m_connStr))
             {
@@ -427,7 +427,7 @@ namespace DbMigrationTool
                 ExtendedProperty ep = new ExtendedProperty(newDb, appVersionPropertyName, appVersion.ToString());
                 ep.Create();
 
-                ScriptErrorLogger.AddMessage(message: string.Format("Database '{0}' created.", newDb.Name));
+                Logger.AddMessage(message: string.Format("Database '{0}' created.", newDb.Name));
 
                 string newDbConnString = server.ConnectionContext.ConnectionString + ";initial catalog=" + newDb.Name;
                 // 2. Database Setup Process.
@@ -443,7 +443,7 @@ namespace DbMigrationTool
                 string oldDatabaseName = string.Empty;
                 if (server.Databases.Contains(databaseName))
                 {
-                    ScriptErrorLogger.AddMessage(message: string.Format("Old database found with name '{0}', proceeding with Db replacement...", databaseName));
+                    Logger.AddMessage(message: string.Format("Old database found with name '{0}', proceeding with Db replacement...", databaseName));
                     /* DataPackageScript creation ommitted for performance reasons.
                     // 3. DataPackageScript creation.                
                     Script dataPackageScript = CreateDataPackageScript(sourceDatabaseName: databaseName, targetDatabaseName: newDatabaseName);
@@ -481,7 +481,7 @@ namespace DbMigrationTool
                     else
                     {
                         string errMsg = string.Format("Could not find ExtendedProperty '{0}' for database '{1}'.", appVersionPropertyName, databaseName);
-                        ScriptErrorLogger.AddMessage(message: errMsg, logType: LogTypeEnum.Error);
+                        Logger.AddMessage(message: errMsg, logType: LogTypeEnum.Error);
                         throw new Exception(errMsg);
                     }
 
@@ -490,12 +490,12 @@ namespace DbMigrationTool
                 }
                 else
                 {
-                    ScriptErrorLogger.AddMessage(message: string.Format("No database to replace found with name '{0}'.", databaseName));
+                    Logger.AddMessage(message: string.Format("No database to replace found with name '{0}'.", databaseName));
                 }
 
                 List<Database> databasesToDrop = new List<Database>();
                 //4.2 delete databases, only if a valid backup exists.
-                ScriptErrorLogger.AddMessage(message: "Deleting other databases (only if there's a valid backup file)...");
+                Logger.AddMessage(message: "Deleting other databases (only if there's a valid backup file)...");
                 foreach (Database db in server.Databases)
                 {
                     bool deleteDatabase = db.Name.StartsWith(databaseName + "_") && !db.Name.Equals(oldDatabaseName) && !db.Name.Equals(newDb.Name);
@@ -518,19 +518,19 @@ namespace DbMigrationTool
 
                 databasesToDrop.ForEach(db =>
                 {
-                    ScriptErrorLogger.AddMessage(message: string.Format("Dropping database '{0}'", db.Name));
+                    Logger.AddMessage(message: string.Format("Dropping database '{0}'", db.Name));
                     db.Drop();
                 });
 
                 // 5. rename new database to it's operational name.
                 RenameDatabase(server, newDb, databaseName);
-                ScriptErrorLogger.AddMessage(message: string.Format("Database bootstraping process completed for database '{0}'", databaseName));
+                Logger.AddMessage(message: string.Format("Database bootstraping process completed for database '{0}'", databaseName));
             }
         }
 
         private OperationResult RenameDatabase(Server server, Database database, string newDbName)
         {
-            ScriptErrorLogger.AddMessage(message: string.Format("Renaming database '{0}' to '{1}'", database, newDbName));
+            Logger.AddMessage(message: string.Format("Renaming database '{0}' to '{1}'", database, newDbName));
             server.KillAllProcesses(database.Name);
             database.DatabaseOptions.UserAccess = DatabaseUserAccess.Single;
             database.Alter(TerminationClause.RollbackTransactionsImmediately);
@@ -538,13 +538,13 @@ namespace DbMigrationTool
             database.Alter();
             database.DatabaseOptions.UserAccess = DatabaseUserAccess.Multiple;
             database.Alter(TerminationClause.FailOnOpenTransactions);
-            ScriptErrorLogger.AddMessage(message: string.Format("Rename completed."));
+            Logger.AddMessage(message: string.Format("Rename completed."));
             return new OperationOk();
         }
 
         public OperationResult BackupDatabase(string databaseName, Server server)
         {
-            ScriptErrorLogger.AddMessage(message: string.Format("Backing up database '{0}' ", databaseName));
+            Logger.AddMessage(message: string.Format("Backing up database '{0}' ", databaseName));
             Backup backup = new Backup();
             backup.Action = BackupActionType.Database;
             backup.Database = databaseName;
@@ -559,13 +559,13 @@ namespace DbMigrationTool
             backup.Complete += new Microsoft.SqlServer.Management.Common.ServerMessageEventHandler(backup_Complete);
             // Perform backup.
             backup.SqlBackup(server);
-            ScriptErrorLogger.AddMessage(message: string.Format("Backup of database '{0}' completed.", databaseName));
+            Logger.AddMessage(message: string.Format("Backup of database '{0}' completed.", databaseName));
             return new OperationOk();
         }
 
         public OperationResult VerifyDatabaseBackup(string backupFileName, string databaseName, Server server)
         {
-            ScriptErrorLogger.AddMessage(message: string.Format("Verifying backup file '{0}' for database '{1}' ", backupFileName, databaseName));
+            Logger.AddMessage(message: string.Format("Verifying backup file '{0}' for database '{1}' ", backupFileName, databaseName));
             Restore restore = new Restore();
             restore.Devices.AddDevice(backupFileName + ".bak", DeviceType.File);
             restore.Database = databaseName;
@@ -574,18 +574,18 @@ namespace DbMigrationTool
             if (!rslt)
             {
                 string msg = string.Format("Backup file '{0}' for database '{1}' could not be verified or it's corrupted.", backupFileName, databaseName);
-                ScriptErrorLogger.AddMessage(message: msg, logType: LogTypeEnum.Error);
+                Logger.AddMessage(message: msg, logType: LogTypeEnum.Error);
                 return new OperationFailed(msg);
             }
 
-            ScriptErrorLogger.AddMessage(message: "Backup file OK.");
+            Logger.AddMessage(message: "Backup file OK.");
 
             return new OperationOk();
         }
 
         public Script CreateDataPackageScript(string sourceDatabaseName, string targetDatabaseName)
         {
-            ScriptErrorLogger.AddMessage(message: "Creating DataPackageScript...");
+            Logger.AddMessage(message: "Creating DataPackageScript...");
             StringBuilder dataPackageBuilder = new StringBuilder();
             List<string> ignoreTables = new List<string>() { "SYSTEM_VERSIONING", "SYSTEM_VERSIONING_LOG" };
 
@@ -695,13 +695,13 @@ namespace DbMigrationTool
                     Version = 1
                 };
 
-                ScriptErrorLogger.AddMessage(message: "DataPackageScript created: " + script.FileName);
+                Logger.AddMessage(message: "DataPackageScript created: " + script.FileName);
 
                 return script;
             }
             catch (Exception e)
             {
-                ScriptErrorLogger.AddMessage(message: "Error creating DataPackageScript: " + e.Message, logType: LogTypeEnum.Error);
+                Logger.AddMessage(message: "Error creating DataPackageScript: " + e.Message, logType: LogTypeEnum.Error);
                 Debug.WriteLine("CreateDataPackageScript FAILED: " + e.Message);
                 throw e;
             }

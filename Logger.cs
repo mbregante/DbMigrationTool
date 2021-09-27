@@ -3,13 +3,13 @@ using System.Linq;
 
 namespace DbMigrationTool
 {
-    public static class ScriptErrorLogger
+    public static class Logger
     {
         private static List<ScriptLog> s_scriptsLog;
         private static SystemVersioningLogBroker s_broker;
         private static List<SystemVersioningLog> s_logs;
 
-        static ScriptErrorLogger()
+        static Logger()
         {
             s_scriptsLog = new List<ScriptLog>();
             s_broker = new SystemVersioningLogBroker();
