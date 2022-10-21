@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Maximiliano Bregante</Authors>
     <Description>A simple tool for automatic DB setup and maintenance.</Description>
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.0" />
-    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="161.46437.65" />
+    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="170.8.0" />
   </ItemGroup>
 
   <ItemGroup>
